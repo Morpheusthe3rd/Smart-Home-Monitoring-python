@@ -1,0 +1,105 @@
+// EmonLibrary examples openenergymonitor.org, Licence GNU GPL V3
+
+#include "EmonLib.h"                   // Include Emon Library
+#include "ArduinoJson.h" //version 5.11.2
+EnergyMonitor emon1;                   // Create an instances
+EnergyMonitor emon2;
+EnergyMonitor emon3;
+EnergyMonitor emon4;
+EnergyMonitor emon5;
+EnergyMonitor emon6;
+EnergyMonitor emon7;
+EnergyMonitor emon8;
+EnergyMonitor emon9;
+EnergyMonitor emon10;
+EnergyMonitor emon11;
+EnergyMonitor emon12;
+
+double calVals[12] = {41.3565, 37.092,41.3223,37.9363,40.2253,38.6698,39.6511,36.7647,36.4964,37.4532,34.8432,38.3142};//calibration vals
+double osVals[12] = {-101.737,-89.7626,-103.3058,-91.8058,-96.9429,-64.5785,-82.8707,-69.8529,-65.6934,-61.7978,-62.7178,-93.8697};//offset vals -25.2414
+double cur[12] = {0,0,0,0,0,0,0,0,0,0,0,0};//current values
+int numOfSensors = 12;
+
+String msg = "";
+void setup()
+{  
+  Serial.begin(9600);
+  
+  emon1.current(1, 1000);             // Current: input pin, calibration.
+  emon2.current(2, 1000);
+  emon3.current(3, 1000);
+  emon4.current(4, 1000);
+  emon5.current(5, 1000);
+  emon6.current(6, 1000);
+  emon7.current(7, 1000);
+  emon8.current(8, 1000);
+  emon9.current(9, 1000);
+  emon10.current(10, 1000);
+  emon11.current(11, 1000);
+  emon12.current(12, 1000);
+}
+
+void loop()
+{
+  //Serial.println(temp);// b'j'
+  String tmp = Serial.readString();
+  //if(!tmp.equals("j")){
+  Serial.println("recieved (" + tmp + "), compared to (j\n)");
+  //  }
+  if(tmp.equals("j")){ // when the arduino receives  a 'j' it sends the data collected from the sensors in a JSON
+    Serial.println("\naccepted");
+    DynamicJsonBuffer jBuffer;
+    JsonObject& root = jBuffer.createObject();
+    
+    msg = "";
+    double Irms = 0;
+    for (int i = 0; i < numOfSensors; i++) {
+      //Serial.println(i);
+      if(i == 0){ //Yes this is shitty code but I couldn't figure out to make an array of these that worked.
+        Irms = emon1.calcIrms(1480); 
+      }
+      else if(i == 1){
+        Irms = emon2.calcIrms(1480);
+      }
+      else if(i == 2){
+        Irms = emon3.calcIrms(1480);
+      }
+      else if(i == 3){
+        Irms = emon4.calcIrms(1480);
+      }
+      else if(i == 4){
+        Irms = emon5.calcIrms(1480);
+      }
+      else if(i == 5){
+        Irms = emon6.calcIrms(1480);
+      }
+      else if(i == 6){
+        Irms = emon7.calcIrms(1480);
+      }
+      else if(i == 7){
+        Irms = emon8.calcIrms(1480);
+      }
+      else if(i == 8){
+        Irms = emon9.calcIrms(1480);
+      }
+      else if(i == 9){
+        Irms = emon10.calcIrms(1480);
+      }
+      else if(i == 10){
+        Irms = emon11.calcIrms(1480);
+      }
+      else{
+        Irms = emon12.calcIrms(1480);
+      }
+      cur[i] = calVals[i]*(Irms) + osVals[i];//finds actual current from raw data
+      msg = "Sensor " + String(i+1); // name the sensors
+      root[msg] = cur[i]; //add sensor to the JSON
+    }
+    //root["sensor1"] = 110;
+    //root["sensor2"] = 120;
+    //root["sensor3"] = 130;
+
+    root.printTo(Serial); //send JSON
+    //Serial.println();
+  }
+}
